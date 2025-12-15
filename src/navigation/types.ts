@@ -3,11 +3,18 @@
   ExercisePlayer: {
     exerciseId: string;
   };
+  ProfessionSelect: undefined;
+  Personalization: undefined;
+  Settings: undefined;
+  Achievements: undefined;
 };
 
 export type TabParamList = {
   Home: undefined;
   Exercises: undefined;
-  Dashboard: undefined;
+  Focus: undefined;
+  Dashboard: {
+    scrollTo?: 'history';
+  };
 };
 

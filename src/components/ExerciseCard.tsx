@@ -1,8 +1,9 @@
-﻿import { LinearGradient } from 'expo-linear-gradient';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors } from '../theme/colors';
+﻿import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
 import { EyeExercise } from '../data/exercises';
 import { formatDuration } from '../utils/formatDuration';
+import { getColors } from '../theme/colors';
 
 type Props = {
   exercise: EyeExercise;
@@ -15,59 +16,88 @@ const categoryBadge: Record<EyeExercise['category'], string> = {
   mobility: 'Подвижность'
 };
 
-export const ExerciseCard = ({ exercise, onPress }: Props) => (
-  <Pressable style={styles.card} onPress={onPress} accessibilityRole="button">
-    <LinearGradient colors={[colors.accent, colors.accentSoft]} style={styles.badge}>
+export const ExerciseCard = ({ exercise, onPress }: Props) => {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+  
+  return (
+    <Pressable style={styles.card} onPress={onPress} accessibilityRole="button">
+    <View style={styles.badge}>
       <Text style={styles.badgeText}>{categoryBadge[exercise.category]}</Text>
-    </LinearGradient>
+    </View>
     <Text style={styles.title}>{exercise.title}</Text>
     <Text style={styles.desc}>{exercise.description}</Text>
     <View style={styles.metaRow}>
-      <Text style={styles.meta}>⏱ {formatDuration(exercise.duration)}</Text>
-      <Text style={styles.meta}>• {exercise.steps.length} шага</Text>
+      <View style={styles.metaItem}>
+        <Ionicons name="time-outline" size={14} color={colors.accent} />
+        <Text style={styles.meta}>{formatDuration(exercise.duration)}</Text>
+      </View>
+      <View style={styles.metaItem}>
+        <Ionicons name="list-outline" size={14} color={colors.accent} />
+        <Text style={styles.meta}>{exercise.steps.length} шага</Text>
+      </View>
     </View>
   </Pressable>
-);
+  );
+};
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ReturnType<typeof getColors>) => StyleSheet.create({
   card: {
     backgroundColor: colors.card,
-    borderRadius: 18,
-    padding: 18,
-    gap: 8,
-    shadowColor: '#0F172A',
-    shadowOpacity: 0.05,
+    borderRadius: 20,
+    padding: 20,
+    gap: 12,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
     shadowRadius: 10,
-    elevation: 2
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: colors.border
   },
   badge: {
     alignSelf: 'flex-start',
-    borderRadius: 999,
-    paddingVertical: 4,
-    paddingHorizontal: 12
+    borderRadius: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    backgroundColor: colors.accent
   },
   badgeText: {
     color: '#fff',
-    fontSize: 12,
-    fontWeight: '600'
+    fontSize: 13,
+    fontWeight: '600',
+    letterSpacing: -0.1
   },
   title: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.text
+    fontSize: 20,
+    fontWeight: '600',
+    color: colors.text,
+    letterSpacing: -0.3,
+    marginTop: 4
   },
   desc: {
-    fontSize: 14,
-    color: colors.muted
+    fontSize: 15,
+    color: colors.textSecondary,
+    lineHeight: 22,
+    fontWeight: '400'
   },
   metaRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 4
+    marginTop: 8,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.border
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6
   },
   meta: {
-    fontSize: 13,
-    color: colors.accent
+    fontSize: 14,
+    color: colors.accent,
+    fontWeight: '500'
   }
 });
 

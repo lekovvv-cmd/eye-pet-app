@@ -4,7 +4,8 @@ import { useMemo, useState } from 'react';
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { eyeExercises, EyeExercise } from '../data/exercises';
 import { ExerciseCard } from '../components/ExerciseCard';
-import { colors } from '../theme/colors';
+import { useTheme } from '../context/ThemeContext';
+import { getColors } from '../theme/colors';
 import { RootStackParamList } from '../navigation/types';
 
 const filters: { label: string; value: EyeExercise['category'] | 'all' }[] = [
@@ -16,6 +17,7 @@ const filters: { label: string; value: EyeExercise['category'] | 'all' }[] = [
 
 export const ExercisesScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { colors } = useTheme();
   const [activeFilter, setActiveFilter] = useState<typeof filters[number]['value']>('all');
 
   const filtered = useMemo(() => {
@@ -24,6 +26,8 @@ export const ExercisesScreen = () => {
     }
     return eyeExercises.filter((item) => item.category === activeFilter);
   }, [activeFilter]);
+
+  const styles = createStyles(colors);
 
   return (
     <View style={styles.screen}>
@@ -61,55 +65,60 @@ export const ExercisesScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ReturnType<typeof getColors>) => StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.background,
-    paddingHorizontal: 20,
-    paddingTop: 50
+    paddingHorizontal: 24,
+    paddingTop: 60
   },
   headerBlock: {
-    marginBottom: 12
+    marginBottom: 20
   },
   header: {
-    fontSize: 28,
+    fontSize: 40,
     fontWeight: '700',
-    color: colors.text
+    color: colors.text,
+    letterSpacing: -0.5,
+    marginBottom: 8
   },
   filterScroll: {
-    marginTop: 10,
-    marginBottom: 16,
+    marginTop: 12,
+    marginBottom: 20,
     paddingVertical: 4
   },
   filterRow: {
     flexDirection: 'row',
     flexWrap: 'nowrap',
     alignItems: 'center',
-    paddingRight: 20,
-    marginBottom: 18
+    paddingRight: 24,
+    gap: 10
   },
   chip: {
-    borderWidth: 1,
-    borderColor: colors.accentSoft,
+    borderWidth: 1.5,
+    borderColor: colors.border,
     paddingVertical: 0,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    marginRight: 12,
-    height: 38,
-    justifyContent: 'center'
+    paddingHorizontal: 18,
+    borderRadius: 20,
+    height: 40,
+    justifyContent: 'center',
+    backgroundColor: colors.card
   },
   chipActive: {
-    backgroundColor: colors.accent
+    backgroundColor: colors.accent,
+    borderColor: colors.accent
   },
   chipText: {
-    color: colors.accent,
-    fontWeight: '600'
+    color: colors.textSecondary,
+    fontWeight: '600',
+    fontSize: 15,
+    letterSpacing: -0.2
   },
   chipTextActive: {
     color: '#fff'
   },
   list: {
-    paddingBottom: 30,
-    gap: 14
+    paddingBottom: 24,
+    gap: 16
   }
 });
