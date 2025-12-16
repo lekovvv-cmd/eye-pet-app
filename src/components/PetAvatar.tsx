@@ -14,6 +14,7 @@ import Animated, {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { getColors } from '../theme/colors';
+import { playMoanSound, playShrinkingSound, playTiltingSound, playEyeMovingSound } from '../utils/sounds';
 
 type RandomAction = 'shake-cube' | 'squash' | 'squash-vertical' | 'eye-expression' | 'none';
 
@@ -64,6 +65,9 @@ export const PetAvatar = ({ moodLevel, streak, onPet }: PetAvatarProps) => {
         setCurrentAction(randomAction);
         
         if (randomAction === 'shake-cube') {
+          // Воспроизводим звук наклона
+          playTiltingSound();
+          
           // Shake and transform to cube
           shakeX.value = withRepeat(
             withSequence(
@@ -127,6 +131,9 @@ export const PetAvatar = ({ moodLevel, streak, onPet }: PetAvatarProps) => {
             startRandomAction();
           }, 4200); // Увеличено время до 4.2 секунды (200 + 300 + 3000 + 400 + 300 для запаса)
         } else if (randomAction === 'squash') {
+          // Воспроизводим звук сжатия
+          playShrinkingSound();
+          
           // Squash from right to left
           scaleX.value = withSequence(
             withTiming(0.3, { duration: 200, easing: Easing.out(Easing.ease) }),
@@ -148,6 +155,9 @@ export const PetAvatar = ({ moodLevel, streak, onPet }: PetAvatarProps) => {
             startRandomAction();
           }, 600);
         } else if (randomAction === 'squash-vertical') {
+          // Воспроизводим звук сжатия
+          playShrinkingSound();
+          
           // Squash from top to bottom
           scaleY.value = withSequence(
             withTiming(0.3, { duration: 200, easing: Easing.out(Easing.ease) }),
@@ -169,6 +179,9 @@ export const PetAvatar = ({ moodLevel, streak, onPet }: PetAvatarProps) => {
             startRandomAction();
           }, 600);
         } else if (randomAction === 'eye-expression') {
+          // Воспроизводим звук движения глаз
+          playEyeMovingSound();
+          
           // Change eye expression
           const expressions = [
             { scale: 1.5, x: 0, y: 0 }, // Surprised (big eyes)
@@ -286,6 +299,9 @@ export const PetAvatar = ({ moodLevel, streak, onPet }: PetAvatarProps) => {
       withSpring(0, { damping: 6 })
     );
 
+    // Воспроизводим звук поглаживания
+    playMoanSound();
+
     onPet?.();
   };
 
@@ -319,15 +335,25 @@ export const PetAvatar = ({ moodLevel, streak, onPet }: PetAvatarProps) => {
     ]
   }));
 
-  const heartAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: heartScale.value }],
-    opacity: interpolate(heartScale.value, [0, 1], [0, 1])
-  }));
+  const heartAnimatedStyle = useAnimatedStyle(() => {
+    const scale = heartScale.value;
+    // Используем Math.max/Math.min для clamp значений (работают в worklet)
+    const clampedScale = Math.max(0, Math.min(1, scale));
+    return {
+      transform: [{ scale: clampedScale }],
+      opacity: clampedScale
+    };
+  });
 
-  const glowAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: glowScale.value }],
-    opacity: interpolate(glowScale.value, [1, 1.05], [0.3, 0.6])
-  }));
+  const glowAnimatedStyle = useAnimatedStyle(() => {
+    const scale = glowScale.value;
+    // Используем Math.max/Math.min для clamp значений
+    const clampedScale = Math.max(1, Math.min(1.05, scale));
+    return {
+      transform: [{ scale: clampedScale }],
+      opacity: interpolate(clampedScale, [1, 1.05], [0.3, 0.6])
+    };
+  });
 
   const sparkleAnimatedStyle = useAnimatedStyle(() => ({
     opacity: sparkleOpacity.value
