@@ -1,5 +1,6 @@
 import { Audio } from 'expo-av';
 import { Vibration, Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Пытаемся импортировать Asset, если доступен
 let Asset: any = null;
@@ -10,6 +11,7 @@ try {
 }
 
 let successSound: Audio.Sound | null = null;
+let achievementSound: Audio.Sound | null = null;
 let tickSound: Audio.Sound | null = null;
 
 // Проверяем, что Audio доступен
@@ -21,14 +23,52 @@ const isAudioAvailable = () => {
   }
 };
 
-// Праздничный звук успеха - используем вибрацию с паттерном для создания праздничного эффекта
+// Проверяем, включены ли звуки в настройках
+const isSoundEnabled = async (): Promise<boolean> => {
+  try {
+    const SETTINGS_KEY = 'eye-care-settings:v2';
+    const raw = await AsyncStorage.getItem(SETTINGS_KEY);
+    if (!raw) {
+      return true; // По умолчанию звуки включены
+    }
+    const settings = JSON.parse(raw);
+    return settings.soundEnabled !== false; // По умолчанию true, если не установлено
+  } catch (error) {
+    return true; // В случае ошибки разрешаем звуки
+  }
+};
+
+// Вспомогательная функция для загрузки звука
+async function loadSoundAsset(module: any): Promise<any> {
+  try {
+    // Если это строка (URL), оборачиваем в объект
+    if (typeof module === 'string') {
+      return { uri: module };
+    }
+    // Если это объект с default или uri
+    if (module && typeof module === 'object') {
+      if (module.default) {
+        return { uri: module.default };
+      }
+      if (module.uri) {
+        return { uri: module.uri };
+      }
+    }
+    return module;
+  } catch (error) {
+    console.warn('Failed to load sound asset:', error);
+    return null;
+  }
+}
+
+// Воспроизведение звука успеха (success)
 export async function playSuccessSound() {
   if (!isAudioAvailable()) {
-    // Если Audio недоступен, используем только вибрацию
-    if (Platform.OS !== 'web') {
-      const celebrationPattern = [0, 50, 30, 50, 30, 50, 30, 100];
-      Vibration.vibrate(celebrationPattern);
-    }
+    return;
+  }
+
+  const soundEnabled = await isSoundEnabled();
+  if (!soundEnabled) {
     return;
   }
 
@@ -38,42 +78,104 @@ export async function playSuccessSound() {
       staysActiveInBackground: false,
     });
 
-    // Создаем праздничный звук через последовательность коротких звуков
-    // Используем простой подход - несколько быстрых вибраций + звук
-    if (Platform.OS !== 'web') {
-      const celebrationPattern = [0, 50, 30, 50, 30, 50, 30, 100];
-      Vibration.vibrate(celebrationPattern);
-    }
-
-    // Пытаемся воспроизвести звук успеха
     if (!successSound) {
       try {
-        // Используем простой звук успеха (можно заменить на локальный файл)
+        let soundModule: any;
+        try {
+          soundModule = require('../sounds/success.mp3');
+          if (soundModule === undefined || soundModule === null) {
+            return;
+          }
+        } catch (e) {
+          console.warn('Could not load success.mp3:', e);
+          return;
+        }
+        const soundSource = await loadSoundAsset(soundModule);
+        if (!soundSource) return;
+        
         const { sound } = await Audio.Sound.createAsync(
-          { uri: 'https://assets.mixkit.co/sfx/download/mixkit-achievement-bell-600.mp3' },
+          soundSource,
           { shouldPlay: true, volume: 0.7, isLooping: false }
         );
         successSound = sound;
         await sound.setOnPlaybackStatusUpdate((status) => {
           if (status.isLoaded && status.didJustFinish) {
-            sound.unloadAsync();
+            sound.unloadAsync().catch(() => {});
+            successSound = null;
           }
         });
       } catch (error) {
-        // Если не удалось загрузить, используем только вибрацию
-        successSound = null;
+        console.warn('Failed to play success sound:', error);
       }
     } else {
       try {
         await successSound.replayAsync();
       } catch (error) {
-        // Если ошибка, создаем новый звук
         successSound = null;
         playSuccessSound();
       }
     }
   } catch (error) {
-    // Вибрация уже работает
+    console.warn('Error playing success sound:', error);
+  }
+}
+
+// Воспроизведение звука достижения (achievement)
+export async function playAchievementSound() {
+  if (!isAudioAvailable()) {
+    return;
+  }
+
+  const soundEnabled = await isSoundEnabled();
+  if (!soundEnabled) {
+    return;
+  }
+
+  try {
+    await Audio.setAudioModeAsync({
+      playsInSilentModeIOS: true,
+      staysActiveInBackground: false,
+    });
+
+    if (!achievementSound) {
+      try {
+        let soundModule: any;
+        try {
+          soundModule = require('../sounds/achievement.mp3');
+          if (soundModule === undefined || soundModule === null) {
+            return;
+          }
+        } catch (e) {
+          console.warn('Could not load achievement.mp3:', e);
+          return;
+        }
+        const soundSource = await loadSoundAsset(soundModule);
+        if (!soundSource) return;
+        
+        const { sound } = await Audio.Sound.createAsync(
+          soundSource,
+          { shouldPlay: true, volume: 0.7, isLooping: false }
+        );
+        achievementSound = sound;
+        await sound.setOnPlaybackStatusUpdate((status) => {
+          if (status.isLoaded && status.didJustFinish) {
+            sound.unloadAsync().catch(() => {});
+            achievementSound = null;
+          }
+        });
+      } catch (error) {
+        console.warn('Failed to play achievement sound:', error);
+      }
+    } else {
+      try {
+        await achievementSound.replayAsync();
+      } catch (error) {
+        achievementSound = null;
+        playAchievementSound();
+      }
+    }
+  } catch (error) {
+    console.warn('Error playing achievement sound:', error);
   }
 }
 
@@ -134,6 +236,14 @@ export async function unloadSounds() {
     }
     successSound = null;
   }
+  if (achievementSound) {
+    try {
+      await achievementSound.unloadAsync();
+    } catch (error) {
+      // Игнорируем ошибки
+    }
+    achievementSound = null;
+  }
   if (tickSound) {
     try {
       await tickSound.unloadAsync();
@@ -150,32 +260,14 @@ let shrinkingSound: Audio.Sound | null = null;
 let tiltingSound: Audio.Sound | null = null;
 let eyeMovingSound: Audio.Sound | null = null;
 
-// Вспомогательная функция для загрузки звука
-async function loadSoundAsset(module: any): Promise<any> {
-  try {
-    // Если это строка (URL), оборачиваем в объект
-    if (typeof module === 'string') {
-      return { uri: module };
-    }
-    // Если это объект с default или uri
-    if (module && typeof module === 'object') {
-      if (module.default) {
-        return { uri: module.default };
-      }
-      if (module.uri) {
-        return { uri: module.uri };
-      }
-    }
-    return module;
-  } catch (error) {
-    console.warn('Failed to load sound asset:', error);
-    return null;
-  }
-}
-
 // Воспроизведение звука поглаживания (moan)
 export async function playMoanSound() {
   if (!isAudioAvailable()) {
+    return;
+  }
+
+  const soundEnabled = await isSoundEnabled();
+  if (!soundEnabled) {
     return;
   }
 
@@ -228,6 +320,11 @@ export async function playShrinkingSound() {
     return;
   }
 
+  const soundEnabled = await isSoundEnabled();
+  if (!soundEnabled) {
+    return;
+  }
+
   try {
     if (!shrinkingSound) {
       try {
@@ -277,6 +374,11 @@ export async function playTiltingSound() {
     return;
   }
 
+  const soundEnabled = await isSoundEnabled();
+  if (!soundEnabled) {
+    return;
+  }
+
   try {
     if (!tiltingSound) {
       try {
@@ -323,6 +425,11 @@ export async function playTiltingSound() {
 // Воспроизведение звука движения глаз (eye_moving)
 export async function playEyeMovingSound() {
   if (!isAudioAvailable()) {
+    return;
+  }
+
+  const soundEnabled = await isSoundEnabled();
+  if (!soundEnabled) {
     return;
   }
 

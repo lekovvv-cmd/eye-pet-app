@@ -22,9 +22,10 @@ type PetAvatarProps = {
   moodLevel: number;
   streak: number;
   onPet?: () => void;
+  isScreenFocused?: boolean;
 };
 
-export const PetAvatar = ({ moodLevel, streak, onPet }: PetAvatarProps) => {
+export const PetAvatar = ({ moodLevel, streak, onPet, isScreenFocused = true }: PetAvatarProps) => {
   const { colors } = useTheme();
   const bounceY = useSharedValue(0);
   const scale = useSharedValue(1);
@@ -65,8 +66,10 @@ export const PetAvatar = ({ moodLevel, streak, onPet }: PetAvatarProps) => {
         setCurrentAction(randomAction);
         
         if (randomAction === 'shake-cube') {
-          // Воспроизводим звук наклона
-          playTiltingSound();
+          // Воспроизводим звук наклона только если экран в фокусе
+          if (isScreenFocused) {
+            playTiltingSound();
+          }
           
           // Shake and transform to cube
           shakeX.value = withRepeat(
@@ -131,8 +134,10 @@ export const PetAvatar = ({ moodLevel, streak, onPet }: PetAvatarProps) => {
             startRandomAction();
           }, 4200); // Увеличено время до 4.2 секунды (200 + 300 + 3000 + 400 + 300 для запаса)
         } else if (randomAction === 'squash') {
-          // Воспроизводим звук сжатия
-          playShrinkingSound();
+          // Воспроизводим звук сжатия только если экран в фокусе
+          if (isScreenFocused) {
+            playShrinkingSound();
+          }
           
           // Squash from right to left
           scaleX.value = withSequence(
@@ -155,8 +160,10 @@ export const PetAvatar = ({ moodLevel, streak, onPet }: PetAvatarProps) => {
             startRandomAction();
           }, 600);
         } else if (randomAction === 'squash-vertical') {
-          // Воспроизводим звук сжатия
-          playShrinkingSound();
+          // Воспроизводим звук сжатия только если экран в фокусе
+          if (isScreenFocused) {
+            playShrinkingSound();
+          }
           
           // Squash from top to bottom
           scaleY.value = withSequence(
@@ -179,8 +186,10 @@ export const PetAvatar = ({ moodLevel, streak, onPet }: PetAvatarProps) => {
             startRandomAction();
           }, 600);
         } else if (randomAction === 'eye-expression') {
-          // Воспроизводим звук движения глаз
-          playEyeMovingSound();
+          // Воспроизводим звук движения глаз только если экран в фокусе
+          if (isScreenFocused) {
+            playEyeMovingSound();
+          }
           
           // Change eye expression
           const expressions = [
@@ -233,7 +242,7 @@ export const PetAvatar = ({ moodLevel, streak, onPet }: PetAvatarProps) => {
         clearTimeout(actionTimerRef.current);
       }
     };
-  }, []);
+  }, [isScreenFocused]);
 
   useEffect(() => {
     // Плавное покачивание (only when not in random action)
@@ -299,8 +308,10 @@ export const PetAvatar = ({ moodLevel, streak, onPet }: PetAvatarProps) => {
       withSpring(0, { damping: 6 })
     );
 
-    // Воспроизводим звук поглаживания
-    playMoanSound();
+    // Воспроизводим звук поглаживания только если экран в фокусе
+    if (isScreenFocused) {
+      playMoanSound();
+    }
 
     onPet?.();
   };

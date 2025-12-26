@@ -116,6 +116,16 @@ export const useAchievements = () => {
     }));
   }, [unlockedAchievements]);
 
+  const resetAchievements = useCallback(async () => {
+    try {
+      await AsyncStorage.removeItem(STORAGE_KEY);
+      setUnlockedAchievements(new Map());
+      setNewlyUnlocked([]);
+    } catch (error) {
+      console.warn('Failed to reset achievements', error);
+    }
+  }, []);
+
   return {
     isReady,
     checkAchievements,
@@ -126,6 +136,7 @@ export const useAchievements = () => {
     getAllAchievements,
     newlyUnlocked,
     clearNewlyUnlocked: () => setNewlyUnlocked([]),
+    resetAchievements,
   };
 };
 

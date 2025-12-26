@@ -1,4 +1,4 @@
-﻿import { createContext, ReactNode, useContext, useEffect } from 'react';
+﻿import { createContext, ReactNode, useContext, useEffect, useRef } from 'react';
 import { useProgressStorage } from '../hooks/useProgressStorage';
 import { useAchievements, createAchievementStats } from '../hooks/useAchievements';
 import { useSettings } from './SettingsContext';
@@ -6,6 +6,7 @@ import { useSettings } from './SettingsContext';
 type ProgressContextValue = ReturnType<typeof useProgressStorage> & {
   checkAchievements: () => void;
   newlyUnlockedAchievements: string[];
+  resetAchievements: () => Promise<void>;
 };
 
 const ProgressContext = createContext<ProgressContextValue | null>(null);
@@ -50,10 +51,15 @@ export const ProgressProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const handleResetAchievements = async () => {
+    await achievements.resetAchievements();
+  };
+
   const value: ProgressContextValue = {
     ...progress,
     checkAchievements,
     newlyUnlockedAchievements: achievements.newlyUnlocked,
+    resetAchievements: handleResetAchievements,
   };
 
   return <ProgressContext.Provider value={value}>{children}</ProgressContext.Provider>;

@@ -1,5 +1,5 @@
 ﻿import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { ScrollView, StyleSheet, Text, View, Pressable, Modal } from 'react-native';
 import Reanimated, { FadeInDown } from 'react-native-reanimated';
@@ -17,6 +17,7 @@ import { AchievementBadge } from '../components/AchievementBadge';
 import { getRarityColor } from '../types/achievements';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Vibration } from 'react-native';
+import { playAchievementSound } from '../utils/sounds';
 
 export const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -28,6 +29,7 @@ export const HomeScreen = () => {
   const [showAchievementModal, setShowAchievementModal] = useState(false);
   const [currentAchievement, setCurrentAchievement] = useState<string | null>(null);
   const processedAchievementsRef = useRef<Set<string>>(new Set());
+  const isFocused = useIsFocused();
 
   // Показываем промпт персонализации при первом запуске
   useEffect(() => {
@@ -54,6 +56,18 @@ export const HomeScreen = () => {
       }
     }, [newlyUnlockedAchievements])
   );
+
+  // Воспроизводим звук достижения когда модальное окно показывается
+  useEffect(() => {
+    if (showAchievementModal && currentAchievement) {
+      // Небольшая задержка, чтобы звук воспроизводился после появления модального окна
+      const timer = setTimeout(() => {
+        playAchievementSound();
+      }, 300); // Задержка 300мс после показа модального окна
+
+      return () => clearTimeout(timer);
+    }
+  }, [showAchievementModal, currentAchievement]);
 
   const recommended = useMemo(() => {
     // Находим дату последнего выполнения для каждого упражнения
@@ -133,6 +147,7 @@ export const HomeScreen = () => {
       <PetAvatar
         moodLevel={moodLevel}
         streak={stats.streakDays}
+        isScreenFocused={isFocused}
       />
 
       <View style={styles.statsRow}>

@@ -38,7 +38,6 @@ export const FocusScreen = () => {
   // Reanimated values
   const timerScale = useSharedValue(1);
   const timerPulse = useSharedValue(1);
-  const buttonScale = useSharedValue(1);
   const breakProgress = useSharedValue(0);
   const breakCardOpacity = useSharedValue(0);
   const breakCardScale = useSharedValue(0.9);
@@ -184,10 +183,6 @@ export const FocusScreen = () => {
         withSpring(1.15, { damping: 6, stiffness: 200 }),
         withSpring(1, { damping: 8, stiffness: 200 })
       );
-      buttonScale.value = withSequence(
-        withSpring(0.95, { damping: 8 }),
-        withSpring(1, { damping: 8 })
-      );
     } else {
       // Сброс при остановке
       setElapsedTime(0);
@@ -219,10 +214,6 @@ export const FocusScreen = () => {
     transform: [
       { scale: timerScale.value * timerPulse.value }
     ]
-  }));
-
-  const buttonAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: buttonScale.value }]
   }));
 
   const breakCardOpacityStyle = useAnimatedStyle(() => ({
@@ -271,14 +262,21 @@ export const FocusScreen = () => {
         style={styles.timerContainer}
       >
         <Animated.View style={timerAnimatedStyle}>
-          <View style={[styles.timerCircle, { width: TIMER_SIZE, height: TIMER_SIZE, borderRadius: TIMER_SIZE / 2 }]}>
+          <Pressable 
+            onPress={handleToggle}
+            style={({ pressed }) => [
+              styles.timerCircle, 
+              { width: TIMER_SIZE, height: TIMER_SIZE, borderRadius: TIMER_SIZE / 2 },
+              pressed && styles.timerCirclePressed
+            ]}
+          >
             <Text style={[styles.timerValue, { fontSize: isSmallScreen ? 40 : 48 }]}>
               {formatTime(elapsedTime)}
             </Text>
             <Text style={[styles.timerLabel, { fontSize: isSmallScreen ? 14 : 16 }]}>
-              Время работы
+              {isActive ? 'Остановить' : 'Начать'}
             </Text>
-          </View>
+          </Pressable>
         </Animated.View>
       </Animated.View>
 
@@ -316,29 +314,6 @@ export const FocusScreen = () => {
         </Animated.View>
       )}
 
-      <Animated.View 
-        entering={FadeInDown.duration(600).delay(300)}
-      >
-        <Animated.View style={buttonAnimatedStyle}>
-          <Pressable 
-            style={({ pressed }) => [
-              styles.toggleButton, 
-              isActive && styles.toggleButtonActive,
-              pressed && styles.toggleButtonPressed
-            ]} 
-            onPress={handleToggle}
-          >
-            <Ionicons 
-              name={isActive ? 'stop-circle' : 'play-circle'} 
-              size={isSmallScreen ? 28 : 32} 
-              color={isActive ? '#fff' : colors.accent} 
-            />
-            <Text style={[styles.toggleText, isActive && styles.toggleTextActive]}>
-              {isActive ? 'Остановить' : 'Начать работу'}
-            </Text>
-          </Pressable>
-        </Animated.View>
-      </Animated.View>
 
       <Animated.View 
         entering={FadeInDown.duration(600).delay(400)}
@@ -398,6 +373,9 @@ const createStyles = (colors: ReturnType<typeof getColors>) => StyleSheet.create
     shadowOpacity: 0.25,
     shadowRadius: 28,
     elevation: 10,
+  },
+  timerCirclePressed: {
+    opacity: 0.8,
   },
   timerValue: {
     fontWeight: '700',
@@ -465,42 +443,6 @@ const createStyles = (colors: ReturnType<typeof getColors>) => StyleSheet.create
     textAlign: 'center',
     lineHeight: 18,
     marginTop: 4,
-  },
-  toggleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    backgroundColor: colors.card,
-    paddingVertical: 18,
-    paddingHorizontal: 36,
-    borderRadius: 20,
-    borderWidth: 2.5,
-    borderColor: colors.accent,
-    minWidth: 220,
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  toggleButtonActive: {
-    backgroundColor: colors.accent,
-    borderColor: colors.accent,
-    shadowColor: colors.accent,
-    shadowOpacity: 0.3,
-  },
-  toggleButtonPressed: {
-    opacity: 0.8,
-  },
-  toggleText: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: colors.accent,
-    letterSpacing: -0.2,
-  },
-  toggleTextActive: {
-    color: '#fff',
   },
   infoCard: {
     flexDirection: 'row',

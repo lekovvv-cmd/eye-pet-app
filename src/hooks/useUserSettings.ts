@@ -24,6 +24,7 @@ export type UserSettings = {
   notificationsEnabled: boolean; // разрешены ли уведомления
   doNotDisturb: boolean; // режим "Не беспокоить"
   darkMode: boolean; // темная тема
+  soundEnabled: boolean; // включены ли звуки
 };
 
 const SETTINGS_KEY = 'eye-care-settings:v2';
@@ -39,6 +40,7 @@ const DEFAULT_SETTINGS: UserSettings = {
   notificationsEnabled: true,
   doNotDisturb: false,
   darkMode: false,
+  soundEnabled: true,
 };
 
 // Настройки для каждой профессии
@@ -207,6 +209,12 @@ export const useUserSettings = () => {
     await persistSettings(newSettings);
   }, [settings]);
 
+  const updateSoundEnabled = useCallback(async (enabled: boolean) => {
+    const newSettings = { ...settings, soundEnabled: enabled };
+    setSettings(newSettings);
+    await persistSettings(newSettings);
+  }, [settings]);
+
   return {
     settings,
     isReady,
@@ -222,6 +230,7 @@ export const useUserSettings = () => {
     updateNotificationsEnabled,
     updateDoNotDisturb,
     updateDarkMode,
+    updateSoundEnabled,
   };
 };
 

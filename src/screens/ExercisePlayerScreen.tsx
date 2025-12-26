@@ -10,6 +10,7 @@ import { getColors } from '../theme/colors';
 import { RootStackParamList } from '../navigation/types';
 import { useProgress } from '../context/ProgressContext';
 import { ExerciseAnimation } from '../components/ExerciseAnimation';
+import { playSuccessSound } from '../utils/sounds';
 
 export const ExercisePlayerScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -56,6 +57,9 @@ export const ExercisePlayerScreen = () => {
       
       // Вибрация для тактильной обратной связи
       Vibration.vibrate([100, 50, 100]);
+      
+      // Воспроизводим звук успеха
+      playSuccessSound();
       
       Animated.parallel([
         Animated.spring(celebrationScale, {

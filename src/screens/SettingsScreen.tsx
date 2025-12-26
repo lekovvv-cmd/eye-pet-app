@@ -11,7 +11,7 @@ import { cancelBreakReminders } from '../utils/notifications';
 
 export const SettingsScreen = () => {
   const navigation = useNavigation();
-  const { settings, updateDoNotDisturb, updateDarkMode } = useSettings();
+  const { settings, updateDoNotDisturb, updateDarkMode, updateSoundEnabled } = useSettings();
   const { colors } = useTheme();
 
   const openPersonalization = () => {
@@ -156,6 +156,26 @@ export const SettingsScreen = () => {
             />
           </View>
         </View>
+        <View style={[styles.settingCard, { marginTop: 12 }]}>
+          <View style={styles.settingContent}>
+            <View style={styles.settingIcon}>
+              <Ionicons name="volume-high-outline" size={28} color={colors.accent} />
+            </View>
+            <View style={styles.settingText}>
+              <Text style={styles.settingTitle}>Звуки</Text>
+              <Text style={styles.settingSubtitle}>
+                {settings.soundEnabled
+                  ? 'Звуки включены'
+                  : 'Звуки отключены'}
+              </Text>
+            </View>
+            <Toggle
+              value={settings.soundEnabled}
+              onValueChange={updateSoundEnabled}
+              disabled={false}
+            />
+          </View>
+        </View>
       </View>
 
       <View style={styles.section}>
@@ -181,6 +201,7 @@ export const SettingsScreen = () => {
           </View>
         </View>
       </View>
+
     </ScrollView>
   );
 };
